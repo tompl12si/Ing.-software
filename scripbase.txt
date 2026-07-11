@@ -1,0 +1,181 @@
+USE master;
+GO
+
+IF EXISTS (SELECT name FROM sys.databases WHERE name = N'campo')
+BEGIN
+    ALTER DATABASE campo SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE campo;
+END
+GO
+
+CREATE DATABASE campo;
+GO
+
+USE campo;
+GO
+
+CREATE TABLE Roles (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    Nombre VARCHAR(50) NOT NULL,
+    Activo BIT DEFAULT 1 NOT NULL
+);
+
+CREATE TABLE Permisos (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    Nombre VARCHAR(50) NOT NULL,
+    Descripcion VARCHAR(255)
+);
+
+CREATE TABLE Usuario (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    Nombre VARCHAR(100) NOT NULL UNIQUE,
+    Contraseña VARCHAR(255) NOT NULL,
+    Activo BIT DEFAULT 1 NOT NULL,
+    DVH BIGINT DEFAULT 0 NOT NULL
+);
+
+CREATE TABLE Tabla_DVV (
+    Nombre_Tabla VARCHAR(50) PRIMARY KEY,
+    Valor_DVV BIGINT DEFAULT 0 NOT NULL
+);
+
+CREATE TABLE Usuario_Historial (
+    Id_Historial INT PRIMARY KEY IDENTITY(1,1),
+    Id_Usuario_Afectado INT NOT NULL,
+    Nombre_Anterior VARCHAR(100),
+    Contraseña_Anterior VARCHAR(255),
+    Activo_Anterior BIT,
+    Id_Usuario_Responsable INT NOT NULL,
+    Fecha_Cambio DATETIME DEFAULT GETDATE(),
+    Tipo_Operacion VARCHAR(50)
+);
+
+CREATE TABLE Idioma (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Nombre VARCHAR(50) NOT NULL UNIQUE,
+    PorDefecto BIT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE Roles_Permisos (
+    RolId INT NOT NULL,
+    PermisoId INT NOT NULL, 
+    PRIMARY KEY (RolId, PermisoId),
+    FOREIGN KEY (RolId) REFERENCES Roles(Id),
+    FOREIGN KEY (PermisoId) REFERENCES Permisos(Id)
+);
+
+CREATE TABLE Usuario_Roles (
+    UsuarioId INT NOT NULL,
+    RolId INT NOT NULL,
+    PRIMARY KEY (UsuarioId, RolId),
+    FOREIGN KEY (UsuarioId) REFERENCES Usuario(Id),
+    FOREIGN KEY (RolId) REFERENCES Roles(Id)
+);
+
+CREATE TABLE Bitacora (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    Id_Usuario INT NOT NULL,
+    Accion VARCHAR(100) NOT NULL,
+    Detalle VARCHAR(255),
+    Fecha DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (Id_Usuario) REFERENCES Usuario(Id)
+);
+
+CREATE TABLE Traduccion (
+    Idioma_Id INT FOREIGN KEY REFERENCES Idioma(Id),
+    Clave_Control VARCHAR(100) NOT NULL,
+    Texto NVARCHAR(MAX) NOT NULL,
+    PRIMARY KEY (Idioma_Id, Clave_Control)
+);
+GO
+
+SET IDENTITY_INSERT Roles ON;
+INSERT INTO Roles (Id, Nombre, Activo) VALUES (1, 'Cliente', 1);
+INSERT INTO Roles (Id, Nombre, Activo) VALUES (2, 'Admin', 1);
+SET IDENTITY_INSERT Roles OFF;
+GO
+
+SET IDENTITY_INSERT Permisos ON;
+INSERT INTO Permisos (Id, Nombre, Descripcion) VALUES (1, 'AllAccess', 'Acceso total para admin');
+INSERT INTO Permisos (Id, Nombre, Descripcion) VALUES (2, 'ReadOnly', 'SoloVistaParaCliente');
+SET IDENTITY_INSERT Permisos OFF;
+GO
+
+SET IDENTITY_INSERT Usuario ON;
+INSERT INTO Usuario (Id, Nombre, Contraseña, Activo, DVH) 
+VALUES (1, 'admin', '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', 1, 0);
+SET IDENTITY_INSERT Usuario OFF;
+GO
+
+INSERT INTO Usuario_Roles (UsuarioId, RolId) VALUES (1, 2);
+GO
+
+INSERT INTO Roles_Permisos (RolId, PermisoId) VALUES (2, 1);
+INSERT INTO Roles_Permisos (RolId, PermisoId) VALUES (1, 2);
+GO
+
+INSERT INTO Tabla_DVV (Nombre_Tabla, Valor_DVV) VALUES ('Usuario', 0);
+GO
+
+INSERT INTO Idioma (Nombre, PorDefecto) VALUES ('Español', 1);
+INSERT INTO Idioma (Nombre, PorDefecto) VALUES ('English', 0);
+INSERT INTO Idioma (Nombre, PorDefecto) VALUES ('Português', 0);
+GO
+
+INSERT INTO Traduccion (Idioma_Id, Clave_Control, Texto) VALUES 
+(1, 'Form1', 'Control de Acceso'),
+(1, 'label1', 'Usuario:'),
+(1, 'label2', 'Contraseña:'),
+(1, 'button1', 'Iniciar Sesión'),
+(1, 'button2', 'Registrarse'),
+(1, 'MenuAdmin', 'Menú de Administración'),
+(1, 'botondefault', 'Default'),
+(1, 'botonbitacora', 'Bitácora'),
+(1, 'botongestionarusuario', 'Gestionar Usuario'),
+(1, 'botoncerrarsesionadmin', 'Cerrar Sesión'),
+(1, 'labeladministrador', 'Bienvenido'),
+(1, 'MenuGestionUsuario', 'Gestión de Usuarios'), 
+(1, 'botonmodificarusuario', 'Modificar Usuario'),
+(1, 'botonbajausuario', 'Baja Usuario'),
+(1, 'botonverhistorialdecambios', 'Ver Historial de Cambios'),
+(1, 'botonmostrarusuariosdadosdebaja', 'Mostrar Usuarios Dados de Baja'),
+(1, 'botonmostrarusuariosdadosdealta', 'Mostrar Usuarios Dados de Alta');
+
+INSERT INTO Traduccion (Idioma_Id, Clave_Control, Texto) VALUES 
+(2, 'Form1', 'Login Control'),
+(2, 'label1', 'Username:'),
+(2, 'label2', 'Password:'),
+(2, 'button1', 'Log In'),
+(2, 'button2', 'Register'),
+(2, 'MenuAdmin', 'Administration Menu'),
+(2, 'botondefault', 'Default'),
+(2, 'botonbitacora', 'Logbook'),
+(2, 'botongestionarusuario', 'Manage User'),
+(2, 'botoncerrarsesionadmin', 'Log Out'),
+(2, 'labeladministrador', 'Welcome'),
+(2, 'MenuGestionUsuario', 'User Management'), 
+(2, 'botonmodificarusuario', 'Modify User'),
+(2, 'botonbajausuario', 'Delete User'),
+(2, 'botonverhistorialdecambios', 'View Change History'),
+(2, 'botonmostrarusuariosdadosdebaja', 'Show Deleted Users'),
+(2, 'botonmostrarusuariosdadosdealta', 'Show Active Users');
+
+INSERT INTO Traduccion (Idioma_Id, Clave_Control, Texto) VALUES 
+(3, 'Form1', 'Controle de Acesso'),
+(3, 'label1', 'Usuário:'),
+(3, 'label2', 'Senha:'),
+(3, 'button1', 'Iniciar Sessão'),
+(3, 'button2', 'Registrar-se'),
+(3, 'MenuAdmin', 'Menu de Administração'),
+(3, 'botondefault', 'Padrão'),
+(3, 'botonbitacora', 'Log de Sistema'),
+(3, 'botongestionarusuario', 'Gerenciar Usuário'),
+(3, 'botoncerrarsesionadmin', 'Encerrar Sessão'),
+(3, 'labeladministrador', 'Bem-vindo'),
+(3, 'MenuGestionUsuario', 'Gestão de Usuários'), 
+(3, 'botonmodificarusuario', 'Modificar Usuário'),
+(3, 'botonbajausuario', 'Excluir Usuário'),
+(3, 'botonverhistorialdecambios', 'Ver Histórico de Alterações'),
+(3, 'botonmostrarusuariosdadosdebaja', 'Mostrar Usuários Inativos'),
+(3, 'botonmostrarusuariosdadosdealta', 'Mostrar Usuários Ativos');
+GO
