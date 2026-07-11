@@ -1,0 +1,5 @@
+1. ejecutar una consulta y pegar el código en el txt scriptbase
+2. ejecutar código
+3. credenciales de admin:
+nombre/usuario:admin	
+contraseña: 1234
